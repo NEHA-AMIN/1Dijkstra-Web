@@ -1,0 +1,41 @@
+# ============================================
+# Google Cloud Platform - App Engine Config
+# ============================================
+
+runtime: nodejs20
+
+# Environment variables (set in GCP Console or gcloud)
+env_variables:
+  NODE_ENV: 'production'
+  
+# Automatic scaling configuration
+automatic_scaling:
+  target_cpu_utilization: 0.65
+  min_instances: 1
+  max_instances: 10
+  min_pending_latency: 30ms
+  max_pending_latency: automatic
+  max_concurrent_requests: 50
+
+# Health check configuration
+liveness_check:
+  path: "/api/health"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+readiness_check:
+  path: "/api/health"
+  check_interval_sec: 5
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+  app_start_timeout_sec: 300
+
+# Handlers
+handlers:
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto

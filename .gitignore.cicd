@@ -1,0 +1,23 @@
+# ============================================
+# .gitignore additions for CI/CD
+# ============================================
+
+# Test coverage
+coverage/
+.nyc_output/
+*.coverage
+*.lcov
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Deployment
+.elasticbeanstalk/
+
+# CI/CD artifacts
+*.log
+*.tgz
+
+# Monitoring
+monitoring/*.log

@@ -1,0 +1,23 @@
+# ============================================
+# Prometheus Configuration for Monitoring
+# ============================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'dijkstra-web'
+
+# Scrape configurations
+scrape_configs:
+  # Monitor the application metrics
+  - job_name: 'dijkstra-web'
+    static_configs:
+      - targets: ['dijkstra-web:3000']
+    metrics_path: '/api/metrics'
+    scrape_interval: 30s
+
+  # Monitor Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

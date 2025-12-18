@@ -1,0 +1,73 @@
+# ============================================
+# Docker Image Build and Scan
+# ============================================
+# Runs on schedule and manual trigger
+
+name: Docker Image CI
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================
+  # Build and Test Docker Image
+  # ============================================
+  docker-build-test:
+    name: Build and Test Docker Image
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for testing
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: dijkstra-web:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          # Start container
+          docker run -d -p 3000:3000 --name test-container \
+            -e GEMINI_API_KEY=test_key \
+            dijkstra-web:test
+          
+          # Wait for container to be ready
+          sleep 10
+          
+          # Test health endpoint
+          curl -f http://localhost:3000/api/health || exit 1
+          
+          # Stop and remove container
+          docker stop test-container
+          docker rm test-container
+
+      - name: Run security scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: dijkstra-web:test
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Analyze image size
+        run: |
+          echo "Image size analysis:"
+          docker images dijkstra-web:test --format "Size: {{.Size}}"
+          docker history dijkstra-web:test --no-trunc
